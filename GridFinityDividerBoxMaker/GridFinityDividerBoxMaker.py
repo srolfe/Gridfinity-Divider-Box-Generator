@@ -9,10 +9,10 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 SCALE = 0.1
 
 # User parameters
-slotsWide = 2
-slotsDeep = 3
-slotsHigh = 1.5
-dividerCount = 5
+slotsWide = 3
+slotsDeep = 2
+slotsHigh = 3
+dividerCount = 0
 
 magnetDiameter = 6.5 * SCALE
 magnetThiccness = 2.5 * SCALE
@@ -22,6 +22,7 @@ magnetThiccness = 2.5 * SCALE
 baseCornerRadius = 4 * SCALE
 baseLip = .8 * SCALE
 slotDimension = 42 * SCALE
+slotHeightDimension = 7 * SCALE
 nestingDepth = 5 * SCALE
 nestingRimWidth = 2.4 * SCALE
 nestingClearance = .25 * SCALE
@@ -177,14 +178,14 @@ def createRimSketch(component: adsk.fusion.Component) -> adsk.fusion.Profile:
     h = -slotDimension / 2
     p = lambda x, y: createPoint(x, y , h)
 
-    p0 = p(0, slotsHigh * slotDimension)
-    p1 = p(0, slotsHigh * slotDimension + nestingDepth - nestingVerticalClearance)
+    p0 = p(0, slotsHigh * slotHeightDimension)
+    p1 = p(0, slotsHigh * slotHeightDimension + nestingDepth - nestingVerticalClearance)
     lines.addByTwoPoints(p0, p1)
-    p2 = p(nestingRimWidth - nestingVerticalClearance, slotsHigh * slotDimension + nestingDepth - nestingRimWidth - cornerVerticalOffset)
+    p2 = p(nestingRimWidth - nestingVerticalClearance, slotsHigh * slotHeightDimension + nestingDepth - nestingRimWidth - cornerVerticalOffset)
     lines.addByTwoPoints(p1, p2)
-    p3 = p(nestingRimWidth - nestingVerticalClearance, slotsHigh * slotDimension + baseLip - cornerVerticalOffset)
+    p3 = p(nestingRimWidth - nestingVerticalClearance, slotsHigh * slotHeightDimension + baseLip - cornerVerticalOffset)
     lines.addByTwoPoints(p2, p3)
-    p4 = p(nestingRimWidth + baseLip - nestingVerticalClearance, slotsHigh * slotDimension)
+    p4 = p(nestingRimWidth + baseLip - nestingVerticalClearance, slotsHigh * slotHeightDimension)
     lines.addByTwoPoints(p3, p4)
     lines.addByTwoPoints(p4, p0)
 
@@ -198,8 +199,8 @@ def createIndentSketch(component: adsk.fusion.Component) -> adsk.fusion.Profile:
 
     # Note that this is wallThiccness below p4 in createRimSketch
     x = nestingRimWidth + baseLip - nestingVerticalClearance
-    p0 = p(x, slotsHigh * slotDimension - wallThiccness)
-    p1 = p(x - wallThiccness, slotsHigh * slotDimension - 2 * wallThiccness)
+    p0 = p(x, slotsHigh * slotHeightDimension - wallThiccness)
+    p1 = p(x - wallThiccness, slotsHigh * slotHeightDimension - 2 * wallThiccness)
     lines.addByTwoPoints(p0, p1)
     p2 = p(x - wallThiccness, nestingDepth + wallThiccness + 1 * SCALE)
     # FIXME: fillet this edge
@@ -218,7 +219,7 @@ def createLedgeSketch(component: adsk.fusion.Component) -> adsk.fusion.Profile:
     h = wallThiccness * 2
     p = lambda x, y: createPoint(x, y , h)
 
-    y = slotDimension * slotsHigh
+    y = slotHeightDimension * slotsHigh
     p0 = p(wallThiccness, y)
     p1 = p(wallThiccness + 16 * SCALE, y)
     lines.addByTwoPoints(p0, p1)
@@ -237,9 +238,9 @@ def createDividerSketch(component: adsk.fusion.Component, pos: float) -> adsk.fu
     p0 = p(0, nestingDepth)
     p1 = p(slotsDeep * slotDimension, nestingDepth)
     lines.addByTwoPoints(p0, p1)
-    p2 = p(slotsDeep * slotDimension, slotsHigh * slotDimension)
+    p2 = p(slotsDeep * slotDimension, slotsHigh * slotHeightDimension)
     lines.addByTwoPoints(p1, p2)
-    p3 = p(0, slotsHigh * slotDimension)
+    p3 = p(0, slotsHigh * slotHeightDimension)
     lines.addByTwoPoints(p2, p3)
     lines.addByTwoPoints(p3, p0)
 
@@ -305,7 +306,7 @@ def run(context):
 
     # Now the box
     box_path_objects, box_profile = createCurvedRect(component, slotsWide * slotDimension, slotsDeep * slotDimension, baseCornerRadius, nestingDepth)
-    distance = createDistance(slotsHigh * slotDimension - nestingDepth)
+    distance = createDistance(slotsHigh * slotHeightDimension - nestingDepth)
     base = component.features.extrudeFeatures.addSimple(box_profile, distance, JOIN)
 
     # Rim
@@ -345,7 +346,7 @@ def run(context):
         bb = f.item(n).boundingBox
         mx = bb.maxPoint
         mn = bb.minPoint
-        if close(mn.y, slotsHigh * slotDimension) and close(mx.y, slotsHigh * slotDimension):
+        if close(mn.y, slotsHigh * slotHeightDimension) and close(mx.y, slotsHigh * slotHeightDimension):
             #print(f'[{mn.x}, {mn.y}, {mn.z}] -> [{mx.x}, {mx.y}, {mx.z}]')
             count += 1
             extrude_face = f.item(n)
@@ -353,7 +354,7 @@ def run(context):
 
     # And extrude it
     # FIXME: the + 1 * SCALE is ad hoc (but copied from the original)
-    distance = createDistance(-(slotsHigh * slotDimension - (nestingDepth + wallThiccness + 1 * SCALE)))
+    distance = createDistance(-(slotsHigh * slotHeightDimension - (nestingDepth + wallThiccness + 1 * SCALE)))
     component.features.extrudeFeatures.addSimple(extrude_face, distance, CUT)
 
     # Indent the lower part of the box to leave a rim around the top
@@ -385,7 +386,7 @@ def run(context):
     assert count == 1
 
     fillet_input = fillets.createInput()
-    fillet_radius = createDistance(slotDimension * slotsHigh / 2)
+    fillet_radius = createDistance(slotHeightDimension * slotsHigh / 2)
     edges = adsk.core.ObjectCollection.create()
     edges.add(fillet_edge)
     fillet_input.addConstantRadiusEdgeSet(edges, fillet_radius, False)
